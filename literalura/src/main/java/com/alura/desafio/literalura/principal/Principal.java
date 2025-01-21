@@ -1,9 +1,13 @@
 package com.alura.desafio.literalura.principal;
 
+import com.alura.desafio.literalura.model.Book;
 import com.alura.desafio.literalura.model.DataBook;
+import com.alura.desafio.literalura.repository.BookRepository;
 import com.alura.desafio.literalura.service.ConsumoAPI;
 import com.alura.desafio.literalura.service.ConvertidorDeDatos;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
 
 public class Principal {
@@ -12,6 +16,8 @@ public class Principal {
     private ConsumoAPI consumidor = new ConsumoAPI();
     private ConvertidorDeDatos conversor = new ConvertidorDeDatos();
     private Scanner entrada = new Scanner(System.in);
+    private BookRepository repositorioLibro;
+    private List<Book> librosRegistrados;
 
     public void ejecutar() {
 
@@ -40,7 +46,7 @@ public class Principal {
         }
         switch (opcion){
             case 1:
-                BuscarLibroPorTitulo();
+                MostrarYGuardarLibro();
             break;
             case 2:
                 ListarLibrosRegistrados();
@@ -65,10 +71,12 @@ public class Principal {
     }
 
     public void MostrarYGuardarLibro(){
-        DataBook
+        DataBook datosLibro = ObtenerDatosDeUnLibro();
+        Book libro = new Book(datosLibro);
+        repositorioLibro.save(libro);
     }
 
-    public DataBook BuscarLibroPorTitulo(){
+    public DataBook ObtenerDatosDeUnLibro(){
         System.out.println("Ingrese el nombre del libro que desea buscar: ");
         String tituloLibro = entrada.nextLine();
         var json=consumidor.obtenerDatos(URL_BASE+"/?search="+tituloLibro.replace(" ","+"));
@@ -80,9 +88,12 @@ public class Principal {
     }
     public void ListarLibrosRegistrados(){
         //metodo que trabaja con lo base de datos
+        librosRegistrados = repositorioLibro.findAll();
+        librosRegistrados.stream().sorted(Comparator.comparing(Book::getTitulo)).forEach(System.out::println);
     }
     public void ListarAutoresRegistrados(){
         //metodo que trabaja con lo base de datos
+        autoresRegistrados=repositorioAutor.findAll();
     }
     public void ListarAutoresVivosSegunAnio(){
         //metodo que trabaja con lo base de datos
