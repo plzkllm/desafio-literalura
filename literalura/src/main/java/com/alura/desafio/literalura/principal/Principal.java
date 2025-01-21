@@ -1,13 +1,17 @@
 package com.alura.desafio.literalura.principal;
 
+import com.alura.desafio.literalura.model.Author;
 import com.alura.desafio.literalura.model.Book;
 import com.alura.desafio.literalura.model.DataBook;
+import com.alura.desafio.literalura.repository.AuthorRepository;
 import com.alura.desafio.literalura.repository.BookRepository;
 import com.alura.desafio.literalura.service.ConsumoAPI;
 import com.alura.desafio.literalura.service.ConvertidorDeDatos;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class Principal {
@@ -16,11 +20,12 @@ public class Principal {
     private ConsumoAPI consumidor = new ConsumoAPI();
     private ConvertidorDeDatos conversor = new ConvertidorDeDatos();
     private Scanner entrada = new Scanner(System.in);
-    private BookRepository repositorioLibro;
+    private BookRepository repositorioLibro ;
+    private AuthorRepository repositorioAutor;
     private List<Book> librosRegistrados;
 
     public void ejecutar() {
-
+        seleccionarOpcionMenu();
     }
 
     public void imprimirMenu(){
@@ -93,10 +98,23 @@ public class Principal {
     }
     public void ListarAutoresRegistrados(){
         //metodo que trabaja con lo base de datos
-        autoresRegistrados=repositorioAutor.findAll();
+        List<Author> autoresRegistrados=repositorioAutor.findAll();
+        autoresRegistrados.stream().sorted(Comparator.comparing(Author::getNombre)).forEach(System.out::println);
     }
+
     public void ListarAutoresVivosSegunAnio(){
         //metodo que trabaja con lo base de datos
+        System.out.println("Ingrese el año vivo de autor(es)");
+        int anioBuscado=Integer.parseInt(entrada.nextLine());
+        LocalDate fechaCreada = LocalDate.of(anioBuscado,1,1);
+        Optional<List<Author>> autoresVivosBuscados = repositorioAutor.findByYearAlive(fechaCreada);
+        if(autoresVivosBuscados.isPresent()){
+            List<Author> autoresVivos = autoresVivosBuscados.get();
+            autoresVivos.stream().sorted(Comparator.comparing(Author::getFechaDeNacimiento)).forEach(System.out::println);
+        } else{
+            System.out.println("\nNo se encontraron autores que se encontraran vivos en el año:"+anioBuscado+"\n");
+        }
+
     }
     public void ListarLibrosPorIdioma(){
         System.out.println("Ingrese el idioma para buscar los libros");
@@ -107,8 +125,16 @@ public class Principal {
                 pt - portugues
                 """;
         System.out.println(submenu);
-        String abreviatura = entrada.nextLine();
+        String abreviaturaIdioma = entrada.nextLine();
         //enviar a repositorio la abreviatura
+        Optional<List<Book>>librosPorIdioma = repositorioLibro.findByLanguage(abreviaturaIdioma);
+        if(librosPorIdioma.isPresent()){
+            List<Book> librosObtenidos = librosPorIdioma.get();
+            librosObtenidos.stream().sorted(Comparator.comparing(Book::getTitulo)).forEach(System.out::println);
+        } else{
+            System.out.println("\nNo se encontraron libros de idioma: "+abreviaturaIdioma+"\n");
+        }
+
 
     }
 }
