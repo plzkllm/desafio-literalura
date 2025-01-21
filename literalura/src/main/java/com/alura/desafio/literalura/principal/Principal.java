@@ -1,9 +1,16 @@
 package com.alura.desafio.literalura.principal;
 
+import com.alura.desafio.literalura.model.DataBook;
+import com.alura.desafio.literalura.service.ConsumoAPI;
+import com.alura.desafio.literalura.service.ConvertidorDeDatos;
+
 import java.util.Scanner;
 
 public class Principal {
 
+    private final String URL_BASE= "http://gutendex.com/books/";
+    private ConsumoAPI consumidor = new ConsumoAPI();
+    private ConvertidorDeDatos conversor = new ConvertidorDeDatos();
     private Scanner entrada = new Scanner(System.in);
 
     public void ejecutar() {
@@ -33,19 +40,19 @@ public class Principal {
         }
         switch (opcion){
             case 1:
-
+                BuscarLibroPorTitulo();
             break;
             case 2:
-
+                ListarLibrosRegistrados();
             break;
             case 3:
-
+                ListarAutoresRegistrados();
             break;
             case 4:
-
+                ListarAutoresVivosSegunAnio();
             break;
             case 5:
-
+                ListarLibrosPorIdioma();
             break;
             case 0:
                 System.out.println("Cerrando la aplicación...");
@@ -57,5 +64,41 @@ public class Principal {
 
     }
 
+    public void MostrarYGuardarLibro(){
+        DataBook
+    }
+
+    public DataBook BuscarLibroPorTitulo(){
+        System.out.println("Ingrese el nombre del libro que desea buscar: ");
+        String tituloLibro = entrada.nextLine();
+        var json=consumidor.obtenerDatos(URL_BASE+"/?search="+tituloLibro.replace(" ","+"));
+        DataBook datosLibro = conversor.obtenerDatos(json, DataBook.class);
+        return datosLibro;
+        //tener libros.stream y eso
+        //Buscar
+        //sino encuentra que devuelva el mensaje Libro no encontrado
+    }
+    public void ListarLibrosRegistrados(){
+        //metodo que trabaja con lo base de datos
+    }
+    public void ListarAutoresRegistrados(){
+        //metodo que trabaja con lo base de datos
+    }
+    public void ListarAutoresVivosSegunAnio(){
+        //metodo que trabaja con lo base de datos
+    }
+    public void ListarLibrosPorIdioma(){
+        System.out.println("Ingrese el idioma para buscar los libros");
+        var submenu = """ 
+                es - español
+                en - ingles
+                fr - frances
+                pt - portugues
+                """;
+        System.out.println(submenu);
+        String abreviatura = entrada.nextLine();
+        //enviar a repositorio la abreviatura
+
+    }
 }
 
