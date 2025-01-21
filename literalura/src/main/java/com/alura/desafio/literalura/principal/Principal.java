@@ -1,27 +1,30 @@
 package com.alura.desafio.literalura.principal;
 
-import com.alura.desafio.literalura.model.Author;
-import com.alura.desafio.literalura.model.Book;
-import com.alura.desafio.literalura.model.DataBook;
+import com.alura.desafio.literalura.model.*;
 import com.alura.desafio.literalura.repository.AuthorRepository;
 import com.alura.desafio.literalura.repository.BookRepository;
 import com.alura.desafio.literalura.service.ConsumoAPI;
 import com.alura.desafio.literalura.service.ConvertidorDeDatos;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Component
 public class Principal {
 
     private final String URL_BASE= "http://gutendex.com/books/";
     private ConsumoAPI consumidor = new ConsumoAPI();
     private ConvertidorDeDatos conversor = new ConvertidorDeDatos();
     private Scanner entrada = new Scanner(System.in);
+
+    @Autowired
     private BookRepository repositorioLibro ;
+
+    @Autowired
     private AuthorRepository repositorioAutor;
+
     private List<Book> librosRegistrados;
 
     public void ejecutar() {
@@ -48,7 +51,7 @@ public class Principal {
             imprimirMenu();
             opcion = entrada.nextInt();
             entrada.nextLine();
-        }
+
         switch (opcion){
             case 1:
                 MostrarYGuardarLibro();
@@ -71,22 +74,49 @@ public class Principal {
             default:
                 System.out.println("Opción inválida");
                 break;
+            }
         }
-
     }
 
     public void MostrarYGuardarLibro(){
-        DataBook datosLibro = ObtenerDatosDeUnLibro();
-        Book libro = new Book(datosLibro);
-        repositorioLibro.save(libro);
+        List<DataBook> datosLibro = ObtenerDatosDeLibros();
+        if(datosLibro.isEmpty()){
+            System.out.println("No se encontro el libro");
+        } else {
+            datosLibro.stream().forEach(db -> {
+                Book libro = new Book(db);
+                // Asociar autores sin duplicarlos
+                List<Author> autores = new ArrayList<>();
+                for (DataAuthor da : db.autores()) {
+                    // Verificar si el autor ya existe
+                    Optional<Author> autorExistente = repositorioAutor.findByNombreContainsIgnoreCase(da.nombre());
+                    Author autor;
+                    if (autorExistente.isPresent()) {
+                        autor = autorExistente.get();
+                    } else {
+                        autor = new Author(da.nombre(), da.fechaDeNacimiento(), da.fechaDeFallecimiento());
+                        repositorioAutor.save(autor);  // Guardar autor nuevo si no existe
+                    }
+                    autores.add(autor);
+                }
+
+                libro.setAutor_es(autores);
+
+
+                repositorioLibro.save(libro);
+                System.out.println(libro);
+            } );
+        }
+        //Book libro = new Book(datosLibro);
+       // repositorioLibro.save(libro);
     }
 
-    public DataBook ObtenerDatosDeUnLibro(){
+    public List<DataBook> ObtenerDatosDeLibros(){
         System.out.println("Ingrese el nombre del libro que desea buscar: ");
         String tituloLibro = entrada.nextLine();
-        var json=consumidor.obtenerDatos(URL_BASE+"/?search="+tituloLibro.replace(" ","+"));
-        DataBook datosLibro = conversor.obtenerDatos(json, DataBook.class);
-        return datosLibro;
+        var json=consumidor.obtenerDatos(URL_BASE+"/?search="+tituloLibro.replace(" ","+").toLowerCase());
+        DataBookList datosLibros = conversor.obtenerDatos(json, DataBookList.class);
+        return datosLibros.listaDeLibros();
         //tener libros.stream y eso
         //Buscar
         //sino encuentra que devuelva el mensaje Libro no encontrado
@@ -106,8 +136,7 @@ public class Principal {
         //metodo que trabaja con lo base de datos
         System.out.println("Ingrese el año vivo de autor(es)");
         int anioBuscado=Integer.parseInt(entrada.nextLine());
-        LocalDate fechaCreada = LocalDate.of(anioBuscado,1,1);
-        Optional<List<Author>> autoresVivosBuscados = repositorioAutor.findByYearAlive(fechaCreada);
+        Optional<List<Author>> autoresVivosBuscados = repositorioAutor.findByYearAlive(anioBuscado);
         if(autoresVivosBuscados.isPresent()){
             List<Author> autoresVivos = autoresVivosBuscados.get();
             autoresVivos.stream().sorted(Comparator.comparing(Author::getFechaDeNacimiento)).forEach(System.out::println);
@@ -127,14 +156,12 @@ public class Principal {
         System.out.println(submenu);
         String abreviaturaIdioma = entrada.nextLine();
         //enviar a repositorio la abreviatura
-        Optional<List<Book>>librosPorIdioma = repositorioLibro.findByLanguage(abreviaturaIdioma);
-        if(librosPorIdioma.isPresent()){
-            List<Book> librosObtenidos = librosPorIdioma.get();
-            librosObtenidos.stream().sorted(Comparator.comparing(Book::getTitulo)).forEach(System.out::println);
-        } else{
-            System.out.println("\nNo se encontraron libros de idioma: "+abreviaturaIdioma+"\n");
-        }
-
+        List<Book> todosLosLibros = repositorioLibro.findAll();
+        List<Book> librosPorIdioma = todosLosLibros.stream()
+                .filter(l -> l.getIdioma_s().stream()
+                        .anyMatch(i ->i.equalsIgnoreCase(abreviaturaIdioma)))
+                .collect(Collectors.toList());
+        librosPorIdioma.stream().sorted(Comparator.comparing(Book::getTitulo)).forEach(System.out::println);
 
     }
 }

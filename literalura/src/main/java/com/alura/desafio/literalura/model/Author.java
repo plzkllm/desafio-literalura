@@ -13,18 +13,38 @@ public class Author {
     private Long id; // Identificador único de Autor
     @Column(unique = true)
     private String nombre;
-    private LocalDate fechaDeNacimiento;
-    private LocalDate fechaDeFallecimiento;
+    private Integer fechaDeNacimiento;
+    private Integer fechaDeFallecimiento;
 
-    @ManyToMany(mappedBy = "autor_es", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "Autor_Libro",
-            joinColumns = @JoinColumn(name = "autor_id"),
-            inverseJoinColumns = @JoinColumn(name = "libro_id"))
+    public Author(String nombre, Integer fechaDeNacimiento, Integer fechaDeFallecimiento) {
+        this.nombre=nombre;
+        this.fechaDeNacimiento=fechaDeNacimiento;
+        this.fechaDeFallecimiento=fechaDeFallecimiento;
+
+    }
+
+    @Override
+    public String toString() {
+        return "-------- Author --------" +
+                "Nombre:"  + nombre + "\n" +
+                "fechaDeNacimiento: " + fechaDeNacimiento + "\n" +
+                "fechaDeFallecimiento: " + fechaDeFallecimiento + "\n" +
+                ", id=" + id + "\n" +
+                "-----------------------"
+                ;
+    }
+
+    @ManyToMany(mappedBy = "autor_es")
     private List<Book> nombresLibros;
 
     public Author(){
 
+    }
+
+    public Author(DataAuthor autor){
+        this.nombre= autor.nombre();
+        this.fechaDeNacimiento=autor.fechaDeNacimiento();
+        this.fechaDeFallecimiento=autor.fechaDeFallecimiento();
     }
 
     public Long getId() {
@@ -47,19 +67,19 @@ public class Author {
         this.nombre = nombre;
     }
 
-    public LocalDate getFechaDeNacimiento() {
+    public Integer getFechaDeNacimiento() {
         return fechaDeNacimiento;
     }
 
-    public void setFechaDeNacimiento(LocalDate fechaDeNacimiento) {
+    public void setFechaDeNacimiento(Integer fechaDeNacimiento) {
         this.fechaDeNacimiento = fechaDeNacimiento;
     }
 
-    public LocalDate getFechaDeFallecimiento() {
+    public Integer getFechaDeFallecimiento() {
         return fechaDeFallecimiento;
     }
 
-    public void setFechaDeFallecimiento(LocalDate fechaDeFallecimiento) {
+    public void setFechaDeFallecimiento(Integer fechaDeFallecimiento) {
         this.fechaDeFallecimiento = fechaDeFallecimiento;
     }
 }

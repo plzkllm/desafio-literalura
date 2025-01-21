@@ -3,16 +3,20 @@ package com.alura.desafio.literalura.model;
 import jakarta.persistence.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "Libro")
 public class Book {
     @Id
     private Long id;
-    @Column(unique = true)
     private String titulo;
 
-    @ManyToMany(mappedBy = "nombresLibros")
+    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "Libro_Autor",
+            joinColumns = @JoinColumn(name = "libro_id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id"))
     private List<Author> autor_es;
 
     private List<String> idioma_s;
@@ -33,9 +37,13 @@ public class Book {
     public Book(DataBook datosLibro) {
         this.id=datosLibro.id();
         this.titulo= datosLibro.titulo();
-        this.autor_es=datosLibro.autores();
+        this.autor_es=datosLibro.autores().stream().map(Author::new).collect(Collectors.toList());
         this.idioma_s=datosLibro.idioma();
         this.numeroDeDescargas= datosLibro.numeroDeDescargas();
+    }
+
+    public void setAutor_es(List<Author> autor_es) {
+        this.autor_es = autor_es;
     }
 
     public Long getId() {
@@ -48,10 +56,11 @@ public class Book {
 
     @Override
     public String toString() {
+        String autores= autor_es.stream().map(Author::getNombre).collect(Collectors.joining(" "));
         return "------- LIBRO -------\n" +
                 "Titulo: " + titulo + "\n" +
-                "Autor(es): " + autor_es + "\n" +
-                "Idioma(s): " + idioma_s + "\n" +
+                "Autor(es): " + autores +"\n" +
+        "Idioma(s): " + idioma_s + "\n" +
                 "Numero de descargas: " + numeroDeDescargas + "\n" +
                 "--------------------";
     }
